@@ -1,0 +1,24 @@
+<!doctype html>
+<h1 id="title">Streaming from <code>/stream</code></h1>
+<div id="out"></div>
+<script>
+  var out = document.getElementById('out');
+  var title = document.getElementById('title');
+  var decoder = new TextDecoder();
+
+  fetch('/stream').then(function(res) {
+    var reader = res.body.getReader();
+    reader.read().then(onRead(reader));
+  });
+
+  function onRead(reader) {
+    return function(chunk) {
+      if (chunk.done) {
+        title.textContent = 'Finished streaming';
+      } else {
+        out.textContent += decoder.decode(chunk.value, { stream: true });
+        reader.read().then(onRead(reader));
+      }
+    }
+  }
+</script>
