@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 
 const endlessStream = res => {
@@ -22,17 +23,24 @@ const frontend = res => {
   res.end();
 };
 
-http
-  .createServer((req, res) => {
-    console.log('Connection opened: ', req.url);
-    res.on('close', () => {
-      console.log('Connection closed');
-    });
+const server = prefix => (req, res) => {
+  console.log(`[${prefix}] Connection opened: `, req.url);
+  res.on('close', () => {
+    console.log(`[${prefix}] Connection closed`);
+  });
 
-    if (req.url === '/stream') {
-      endlessStream(res);
-    } else {
-      frontend(res);
-    }
-  })
-  .listen(3000);
+  if (req.url === '/stream') {
+    endlessStream(res);
+  } else {
+    frontend(res);
+  }
+};
+
+// keys aren't in source control
+const options = {
+  key: fs.readFileSync('.keys/privkey.pem'),
+  cert: fs.readFileSync('.keys/fullchain.pem'),
+};
+
+https.createServer(options, server('https')).listen(3005);
+http.createServer(server('http')).listen(3006);
